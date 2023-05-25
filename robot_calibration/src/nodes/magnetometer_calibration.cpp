@@ -21,8 +21,8 @@
 #include <robot_calibration/cost_functions/magnetometer_error.hpp>
 
 #include <rclcpp/rclcpp.hpp>
-#include <rosbag2_cpp/reader.hpp>
-#include <rosbag2_cpp/writer.hpp>
+// #include <rosbag2_cpp/reader.hpp>
+// #include <rosbag2_cpp/writer.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <sensor_msgs/msg/magnetic_field.hpp>
@@ -94,33 +94,33 @@ int main(int argc, char** argv)
     "bag_file_name", "/tmp/magnetometer_calibration.bag");
 
   // IMU topic name
-  std::string mag_topic_name = "/imu/mag";
+  std::string mag_topic_name = node->declare_parameter<std::string>("mag_topic", "/imu/mag");
 
   // Get calibration data
   std::vector<sensor_msgs::msg::MagneticField> data;
   if (rotation_velocity <= 0.0 && rotation_duration <= 0.0 && !rotation_manual)
   {
     // Load calibration data from bag file
-    rosbag2_cpp::Reader reader;
-    reader.open(bag_file_name);
-    while (reader.has_next())
-    {
-      try
-      {
-        auto bag_message = reader.read_next();
-        sensor_msgs::msg::MagneticField msg;
-        rclcpp::SerializedMessage extracted_serialized_msg(*bag_message->serialized_data);
-        rclcpp::Serialization<sensor_msgs::msg::MagneticField> serialization;
-        serialization.deserialize_message(&extracted_serialized_msg, &msg);
-        data.push_back(msg);
-      }
-      catch (std::runtime_error&)
-      {
-        RCLCPP_WARN(node->get_logger(), "Unable to deserialize message");
-      }
-    }
+    // rosbag2_cpp::Reader reader;
+    // reader.open(bag_file_name);
+    // while (reader.has_next())
+    // {
+    //   try
+    //   {
+    //     auto bag_message = reader.read_next();
+    //     sensor_msgs::msg::MagneticField msg;
+    //     rclcpp::SerializedMessage extracted_serialized_msg(*bag_message->serialized_data);
+    //     rclcpp::Serialization<sensor_msgs::msg::MagneticField> serialization;
+    //     serialization.deserialize_message(&extracted_serialized_msg, &msg);
+    //     data.push_back(msg);
+    //   }
+    //   catch (std::runtime_error&)
+    //   {
+    //     RCLCPP_WARN(node->get_logger(), "Unable to deserialize message");
+    //   }
+    // }
 
-    RCLCPP_INFO_STREAM(node->get_logger(), "Loaded bag file with " << data.size() << " samples");
+    // RCLCPP_INFO_STREAM(node->get_logger(), "Loaded bag file with " << data.size() << " samples");
   }
   else
   {
@@ -164,31 +164,31 @@ int main(int argc, char** argv)
     capture.getData(data);
 
     // Save data to bag file
-    RCLCPP_INFO_STREAM(node->get_logger(), "Saving bag file with " << data.size() << " samples.");
-    rosbag2_cpp::Writer writer;
-    writer.open(bag_file_name);
-    {
-      // Create topic metadata
-      rosbag2_storage::TopicMetadata metadata;
-      metadata.name = mag_topic_name;
-      metadata.type = "sensor_msgs/msg/MagneticField";
-      metadata.serialization_format = "cdr";
-      writer.create_topic(metadata);
-    }
-    for (auto msg : data)
-    {
-      // Serialize data
-      rclcpp::Serialization<sensor_msgs::msg::MagneticField> serialization;
-      rclcpp::SerializedMessage serialized_msg;
-      serialization.serialize_message(&msg, &serialized_msg);
+    // RCLCPP_INFO_STREAM(node->get_logger(), "Saving bag file with " << data.size() << " samples.");
+    // rosbag2_cpp::Writer writer;
+    // writer.open(bag_file_name);
+    // {
+    //   // Create topic metadata
+    //   rosbag2_storage::TopicMetadata metadata;
+    //   metadata.name = mag_topic_name;
+    //   metadata.type = "sensor_msgs/msg/MagneticField";
+    //   metadata.serialization_format = "cdr";
+    //   writer.create_topic(metadata);
+    // }
+    // for (auto msg : data)
+    // {
+    //   // Serialize data
+    //   rclcpp::Serialization<sensor_msgs::msg::MagneticField> serialization;
+    //   rclcpp::SerializedMessage serialized_msg;
+    //   serialization.serialize_message(&msg, &serialized_msg);
 
-      // Store to bagfile
-      auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
-      bag_message->topic_name = mag_topic_name;
-      bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
-        &serialized_msg.get_rcl_serialized_message(), [](rcutils_uint8_array_t * /* data */) {});
-      writer.write(bag_message);
-    }
+    //   // Store to bagfile
+    //   auto bag_message = std::make_shared<rosbag2_storage::SerializedBagMessage>();
+    //   bag_message->topic_name = mag_topic_name;
+    //   bag_message->serialized_data = std::shared_ptr<rcutils_uint8_array_t>(
+    //     &serialized_msg.get_rcl_serialized_message(), [](rcutils_uint8_array_t * /* data */) {});
+    //   writer.write(bag_message);
+    // }
   }
 
   // Setup free parameters
